@@ -106,7 +106,7 @@ enum class ActivationMode {OTAA, ABP};
         #define WAITFOR_SERIAL_S WAITFOR_SERIAL_SECONDS_DEFAULT
     #endif
 #else
-    #define WAITFOR_SERIAL_S 0
+    #define WAITFOR_SERIAL_S 10
 #endif 
 
 #if defined(ABP_ACTIVATION) && defined(CLASSIC_LMIC)
@@ -275,6 +275,7 @@ enum class ActivationMode {OTAA, ABP};
 
     void initDisplay()
     {
+        ///display.setI2CAddress(0x3C);
         display.begin();
         display.setFont(u8x8_font_victoriamedium8_r); 
     }

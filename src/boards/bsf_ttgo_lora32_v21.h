@@ -98,7 +98,8 @@ const lmic_pinmap lmic_pins = {
 
 #ifdef USE_DISPLAY
     // Create U8x8 instance for SSD1306 OLED display (no reset) using hardware I2C.
-    U8X8_SSD1306_128X64_NONAME_HW_I2C display(/*rst*/ OLED_RST, /*scl*/ SCL, /*sda*/ SDA);
+    // Alain U8X8_SSD1306_128X64_NONAME_HW_I2C display(/*rst*/ OLED_RST, /*scl*/ SCL, /*sda*/ SDA);
+    U8X8_SSD1306_128X64_NONAME_HW_I2C display(/*rst*/ -1, /*scl*/ SCL, /*sda*/ SDA);
 #endif
 
 
