@@ -58,8 +58,9 @@
 //  ▀▀▀ ▀▀▀ ▀▀▀ ▀ ▀   ▀▀▀ ▀▀▀ ▀▀  ▀▀▀   ▀▀  ▀▀▀ ▀▀▀ ▀▀▀ ▀ ▀
 
 
-const uint8_t payloadBufferLength = 4;    // Adjust to fit max payload length
-
+const uint8_t payloadBufferLength = 6;    // Adjust to fit max payload length
+uint8_t button_ON = HIGH;
+uint8_t button_OFF = HIGH;
 
 //  █ █ █▀▀ █▀▀ █▀▄   █▀▀ █▀█ █▀▄ █▀▀   █▀▀ █▀█ █▀▄
 //  █ █ ▀▀█ █▀▀ █▀▄   █   █ █ █ █ █▀▀   █▀▀ █ █ █ █
@@ -764,11 +765,31 @@ void processWork(ostime_t doWorkJobTimeStamp)
         }
         else
         {
-            // Prepare uplink payload.
             uint8_t fPort = 10;
-            payloadBuffer[0] = counterValue >> 8;
-            payloadBuffer[1] = counterValue & 0xFF;
             uint8_t payloadLength = 2;
+           if (button_OFF == HIGH && button_ON == HIGH) {
+                // Prepare uplink payload.
+                fPort = 10;
+                payloadBuffer[0] = counterValue >> 8;
+                payloadBuffer[1] = counterValue & 0xFF;
+                payloadLength = 2;
+                //AV Do nothing
+                return;
+            } else if (button_OFF == LOW ) {
+                // Prepare uplink payload.
+                fPort = 10;
+                payloadBuffer[0] = 0x00;
+                payloadBuffer[1] = 0x00;
+                payloadBuffer[2] = 0x00;
+                payloadLength = 3;
+            } else if (button_ON == LOW) {
+                // Prepare uplink payload.
+                fPort = 10;
+                payloadBuffer[0] = 0x00;
+                payloadBuffer[1] = 0x00;
+                payloadBuffer[2] = 0x01;
+                payloadLength = 3;
+            }
 
             scheduleUplink(fPort, payloadBuffer, payloadLength);
         }
@@ -848,6 +869,10 @@ void setup()
     // Place code for initializing sensors etc. here.
 
     resetCounter();
+    pinMode(GPIO_NUM_12, INPUT_PULLUP);
+    pinMode(GPIO_NUM_14, INPUT_PULLUP);
+    button_OFF = HIGH;
+    button_ON = HIGH;
 
 //  █ █ █▀▀ █▀▀ █▀▄   █▀▀ █▀█ █▀▄ █▀▀   █▀▀ █▀█ █▀▄
 //  █ █ ▀▀█ █▀▀ █▀▄   █   █ █ █ █ █▀▀   █▀▀ █ █ █ █
@@ -859,11 +884,44 @@ void setup()
     }
 
     // Schedule initial doWork job for immediate execution.
-    os_setCallback(&doWorkJob, doWorkCallback);
+    //AVos_setCallback(&doWorkJob, doWorkCallback);
 }
 
 
 void loop() 
 {
     os_runloop_once();
+    button_OFF = HIGH;
+    button_ON = HIGH;
+    button_ON = digitalRead(GPIO_NUM_12);
+    if (button_ON == LOW) {
+        //schedule uplink for on
+        #ifdef USE_SERIAL
+            serial.println(F("Bouton ON."));
+            serial.flush();            
+        #endif
+        #ifdef USE_DISPLAY
+            // Following mesage shown only if failure was unrelated to I2C.
+            display.setCursor(COL_0, FRMCNTRS_ROW);
+            display.print(F("Bouton ON"));
+        #endif
+        os_setCallback(&doWorkJob, doWorkCallback);
+        delay(1000);
+    } else {
+        button_OFF = digitalRead(GPIO_NUM_14);
+        if (button_OFF == LOW) {
+            //schedule uplink for of
+            #ifdef USE_SERIAL
+                serial.println(F("Bouton OFF."));
+                serial.flush();            
+            #endif
+            #ifdef USE_DISPLAY
+                // Following mesage shown only if failure was unrelated to I2C.
+                display.setCursor(COL_0, FRMCNTRS_ROW);
+                display.print(F("Bouton OFF"));
+            #endif
+            os_setCallback(&doWorkJob, doWorkCallback);
+            delay(1000);
+        }
+    }
 }
