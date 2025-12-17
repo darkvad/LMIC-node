@@ -61,6 +61,8 @@
 const uint8_t payloadBufferLength = 6;    // Adjust to fit max payload length
 uint8_t button_ON = HIGH;
 uint8_t button_OFF = HIGH;
+uint8_t Sirene = LOW;
+uint8_t Flash = LOW;
 
 //  █ █ █▀▀ █▀▀ █▀▄   █▀▀ █▀█ █▀▄ █▀▀   █▀▀ █▀█ █▀▄
 //  █ █ ▀▀█ █▀▀ █▀▄   █   █ █ █ █ █▀▀   █▀▀ █ █ █ █
@@ -694,6 +696,9 @@ lmic_tx_error_t scheduleUplink(uint8_t fPort, uint8_t* data, uint8_t dataLength,
 
 static volatile uint16_t counter_ = 0;
 
+static volatile uint16_t counter_Sirene = 0;
+static volatile uint16_t counter_Flash = 0;
+
 uint16_t getCounterValue()
 {
     // Increments counter and returns the new value.
@@ -775,19 +780,21 @@ void processWork(ostime_t doWorkJobTimeStamp)
                 payloadLength = 2;
                 //AV Do nothing
                 return;
+//            } else if (button_OFF == LOW ) {
             } else if (button_OFF == LOW ) {
                 // Prepare uplink payload.
                 fPort = 10;
                 payloadBuffer[0] = 0x00;
-                payloadBuffer[1] = 0x00;
-                payloadBuffer[2] = 0x00;
+                payloadBuffer[1] = 0x01;
+                payloadBuffer[2] = Sirene;
                 payloadLength = 3;
+//            } else if (button_ON == LOW) {
             } else if (button_ON == LOW) {
                 // Prepare uplink payload.
                 fPort = 10;
                 payloadBuffer[0] = 0x00;
                 payloadBuffer[1] = 0x00;
-                payloadBuffer[2] = 0x01;
+                payloadBuffer[2] = Flash;
                 payloadLength = 3;
             }
 
@@ -873,6 +880,10 @@ void setup()
     pinMode(GPIO_NUM_14, INPUT_PULLUP);
     button_OFF = HIGH;
     button_ON = HIGH;
+    Sirene = LOW;
+    Flash = LOW;
+    counter_Sirene = 0;
+    counter_Flash = 0;
 
 //  █ █ █▀▀ █▀▀ █▀▄   █▀▀ █▀█ █▀▄ █▀▀   █▀▀ █▀█ █▀▄
 //  █ █ ▀▀█ █▀▀ █▀▄   █   █ █ █ █ █▀▀   █▀▀ █ █ █ █
@@ -905,6 +916,8 @@ void loop()
             display.setCursor(COL_0, FRMCNTRS_ROW);
             display.print(F("Bouton ON"));
         #endif
+        counter_Flash++;
+        Flash = counter_Flash % 2;
         os_setCallback(&doWorkJob, doWorkCallback);
         delay(1000);
     } else {
@@ -920,6 +933,8 @@ void loop()
                 display.setCursor(COL_0, FRMCNTRS_ROW);
                 display.print(F("Bouton OFF"));
             #endif
+            counter_Sirene++;
+            Sirene = counter_Sirene % 2;
             os_setCallback(&doWorkJob, doWorkCallback);
             delay(1000);
         }
